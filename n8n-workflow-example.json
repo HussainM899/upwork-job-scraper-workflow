@@ -1,0 +1,260 @@
+{
+  "name": "Upwork Job Scraper with AI Filter",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upwork Job Search",
+        "formDescription": "Enter keywords to search for Upwork jobs",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Job Keywords",
+              "fieldType": "text",
+              "requiredField": true,
+              "fieldName": "keywords",
+              "placeholder": "e.g., nodejs developer, python, web design"
+            },
+            {
+              "fieldLabel": "Maximum Jobs",
+              "fieldType": "number",
+              "requiredField": false,
+              "fieldName": "maxJobs",
+              "defaultValue": 100
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-ngrok-url.ngrok.io/scrape",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "keywords",
+              "value": "={{ $json.keywords }}"
+            },
+            {
+              "name": "maxJobs",
+              "value": "={{ $json.maxJobs }}"
+            },
+            {
+              "name": "headless",
+              "value": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Scrape Upwork Jobs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "documentId": "YOUR_GOOGLE_SHEET_ID",
+        "sheetName": "Sheet1",
+        "options": {}
+      },
+      "name": "Get Existing Jobs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "jobs",
+        "options": {}
+      },
+      "name": "Split Jobs Array",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [910, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.jobId }}",
+              "operation": "notContains",
+              "value2": "={{ $('Get Existing Jobs').all().map(item => item.json.jobId).join(',') }}"
+            }
+          ]
+        }
+      },
+      "name": "Filter New Jobs Only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1130, 300]
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "=Evaluate this job and determine if it matches the following requirements:\n\nJob Data:\nTitle: {{ $json.title }}\nDescription: {{ $json.fullDescription }}\nBudget: {{ $json.budget }}\nSkills: {{ $json.skills }}\nClient Rating: {{ $json.clientRating }}\nClient Spent: {{ $json.clientSpent }}\n\nRequirements:\n- Must be related to [YOUR SKILLS HERE]\n- Budget should be reasonable\n- Client should have good rating\n\nRespond in JSON format:\n{\n  \"result\": true/false,\n  \"reason\": \"explanation why it matches or doesn't\",\n  \"icebreaker\": \"personalized icebreaker if result is true\",\n  \"proposal\": \"full proposal if result is true\"\n}"
+      },
+      "name": "AI Filter & Generate Proposals",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [1350, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.result }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Keep Good Fits Only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1570, 300]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "appendOrUpdate",
+        "documentId": "YOUR_GOOGLE_SHEET_ID",
+        "sheetName": "Sheet1",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "jobId": "={{ $json.jobId }}",
+            "title": "={{ $json.title }}",
+            "link": "={{ $json.link }}",
+            "budget": "={{ $json.budget }}",
+            "postedTime": "={{ $json.postedTime }}",
+            "icebreaker": "={{ $json.icebreaker }}",
+            "proposal": "={{ $json.proposal }}",
+            "reason": "={{ $json.reason }}"
+          }
+        },
+        "options": {}
+      },
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1790, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "=🎯 *New Upwork Job Match!*\n\n*{{ $json.title }}*\n\n💰 Budget: {{ $json.budget }}\n⏰ Posted: {{ $json.postedTime }}\n\n✅ Why it's a good fit:\n{{ $json.reason }}\n\n🔗 [View Job]({{ $json.link }})\n\n💬 Icebreaker:\n{{ $json.icebreaker }}",
+        "additionalFields": {
+          "parseMode": "MarkdownV2",
+          "disable_web_page_preview": true
+        }
+      },
+      "name": "Send Telegram Notification",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [2010, 300]
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Scrape Upwork Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Upwork Jobs": {
+      "main": [
+        [
+          {
+            "node": "Get Existing Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing Jobs": {
+      "main": [
+        [
+          {
+            "node": "Split Jobs Array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Jobs Array": {
+      "main": [
+        [
+          {
+            "node": "Filter New Jobs Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter New Jobs Only": {
+      "main": [
+        [
+          {
+            "node": "AI Filter & Generate Proposals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Filter & Generate Proposals": {
+      "main": [
+        [
+          {
+            "node": "Keep Good Fits Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep Good Fits Only": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
