@@ -1,15 +1,16 @@
-# 🚀 Upwork Job Scraper API
+# 🚀 Upwork Job Scraper
 
-A free, unlimited Upwork job scraper API that bypasses Cloudflare detection using Puppeteer Real Browser. Perfect for automating job searches, filtering opportunities with AI, and building your own job alert system.
+A free, unlimited Upwork job scraper that bypasses Cloudflare detection using Puppeteer Real Browser. Scrape multiple keywords at once and get results in Excel/CSV and JSON formats.
 
 ## ✨ Features
 
 - ✅ **Cloudflare Bypass** - Uses Puppeteer Real Browser to bypass bot detection
 - ✅ **Free & Unlimited** - No subscription fees or API limits
-- ✅ **REST API** - Easy to integrate with n8n, Zapier, or any automation tool
-- ✅ **Detailed Job Data** - Extracts title, description, budget, skills, client info, and more
-- ✅ **Headless Mode** - Run invisibly in production for better performance
-- ✅ **Public URL Support** - Use with ngrok to make it accessible online
+- ✅ **Multi-Keyword Scraping** - Search multiple keywords in one run
+- ✅ **Detailed Job Data** - Extracts full job descriptions by clicking into each job
+- ✅ **Excel & JSON Export** - Get results in both CSV (Excel-compatible) and JSON formats
+- ✅ **Pagination Support** - Automatically scrapes across multiple pages
+- ✅ **REST API Available** - Easy to integrate with n8n, Zapier, or any automation tool (optional)
 
 ## 📋 Prerequisites
 
@@ -20,15 +21,67 @@ A free, unlimited Upwork job scraper API that bypasses Cloudflare detection usin
 
 1. **Install dependencies:**
 ```powershell
-npm install express
+npm install
 ```
 
-2. **Configure environment (optional):**
+## 🎯 Quick Start - Local Scraping (Recommended)
+
+### Option 1: Multi-Keyword Scraper (Best for bulk scraping)
+
+1. **Configure your keywords** in `scrape-multiple.js`:
+```javascript
+const keywords = [
+    'AI Automations',
+    'automation workflows',
+    'n8n',
+    'AI Agents',
+    'voice ai',
+    'chatbots'
+];
+
+const jobsPerKeyword = 30; // Number of jobs per keyword
+const headlessMode = false; // Set to false to see browser
+```
+
+2. **Run the scraper:**
 ```powershell
-copy .env.example .env
+node scrape-multiple.js
 ```
 
-## 🎯 Usage
+3. **Get your results:**
+   - `upwork-results-[timestamp].csv` - Excel-compatible spreadsheet
+   - `upwork-results-[timestamp].json` - Complete data in JSON format
+
+**Output includes:**
+- Search Keyword
+- Job ID
+- Title
+- Link
+- Budget
+- Posted Time
+- Skills
+- Proposals
+- Client Location
+- **Full Description** (complete job details)
+
+### Option 2: Single Keyword Test
+
+For testing or single searches, use `test.js`:
+
+```javascript
+const keywords = 'nodejs developer';
+const headless = false;
+const maxJobs = 30;
+```
+
+Run it:
+```powershell
+node test.js
+```
+
+## 🌐 API Server (Optional - For n8n/Zapier Integration)
+
+If you want to use this as an API with automation tools:
 
 ### Start the Server
 
@@ -38,33 +91,17 @@ npm start
 
 The API will be available at `http://localhost:3000`
 
-### Test Locally with Visible Browser
-
-Create a test file or use Postman to send a POST request:
+### API Endpoints
 
 **Endpoint:** `POST http://localhost:3000/scrape`
 
-**Option 1: Using Keywords (Recommended for n8n)**
+**Request:**
 ```json
 {
   "keywords": "nodejs developer",
   "maxJobs": 100,
   "headless": false
 }
-```
-
-**Option 2: Using Full URL**
-```json
-{
-  "url": "https://www.upwork.com/nx/search/jobs/?q=nodejs&sort=recency",
-  "maxJobs": 50,
-  "headless": false
-}
-```
-
-**Option 3: Using GET method (Perfect for n8n Webhooks)**
-```
-GET http://localhost:3000/scrape?keywords=nodejs+developer&maxJobs=100&headless=true
 ```
 
 **Response:**
@@ -85,34 +122,16 @@ GET http://localhost:3000/scrape?keywords=nodejs+developer&maxJobs=100&headless=
       "budget": "$500-$1000",
       "skills": ["Node.js", "Express", "MongoDB"],
       "postedTime": "Posted 5 minutes ago",
-      "clientLocation": "United States",
-      "clientName": "John Doe",
-      "paymentVerified": true,
-      "clientRating": "5.00 of 5",
-      "clientSpent": "$10K+ spent",
-      "proposals": "5 to 10",
-      "jobDetails": "[Additional job details]"
+      "paymentVerified": true
     }
   ]
-}
-```
-
-### Production Mode (Headless)
-
-For production, set `headless: true` to run the browser invisibly:
-
-```json
-{
-  "keywords": "nodejs",
-  "maxJobs": 100,
-  "headless": true
 }
 ```
 
 **Parameters:**
 - `keywords` or `url` - **(required)** Search keywords or full Upwork URL
 - `maxJobs` - **(optional)** Number of jobs to scrape (default: 100)
-- `headless` - **(optional)** Run browser invisibly (default: true)
+- `headless` - **(optional)** Run browser invisibly (default: true, recommended: false for reliability)
 
 ## 🌐 Make It Accessible Online with ngrok
 
@@ -227,57 +246,105 @@ Each job object contains:
 
 | Field | Description |
 |-------|-------------|
+| `searchKeyword` | The keyword used to find this job |
 | `title` | Job title |
-| `jobId` | Unique job identifier |
+| `jobId` | Unique job identifier (21-digit number) |
 | `link` | Direct link to job posting |
 | `shortDescription` | Brief description from search results |
 | `fullDescription` | **Complete job description** (fetched by clicking into each job) |
 | `budget` | Budget or hourly rate |
 | `skills` | Array of required skills |
 | `postedTime` | When the job was posted |
-| `clientLocation` | Client's country |
-| `clientName` | Client's name |
-| `paymentVerified` | Payment verification status |
-| `clientRating` | Client's rating |
-| `clientSpent` | Total amount spent by client |
 | `proposals` | Number of proposals submitted |
-| `jobDetails` | Additional job details from detail page |
+| `clientLocation` | Client's country |
+| `paymentVerified` | Payment verification status |
 
 **Note:** The scraper automatically clicks on each job to fetch the full description and additional details!
 
+## 📊 Output Files
+
+### CSV File (`upwork-results-[timestamp].csv`)
+- Opens directly in Excel or Google Sheets
+- Columns: Search Keyword, Job ID, Title, Link, Budget, Posted Time, Skills, Proposals, Client Location, Full Description
+- Perfect for filtering and analyzing jobs
+
+### JSON File (`upwork-results-[timestamp].json`)
+- Complete structured data
+- Organized by keyword with job counts
+- Ideal for developers and API integrations
+- Example structure:
+```json
+[
+  {
+    "keyword": "AI Automations",
+    "jobCount": 30,
+    "jobs": [...]
+  },
+  {
+    "keyword": "n8n",
+    "jobCount": 30,
+    "jobs": [...]
+  }
+]
+```
+
 ## 🔧 Troubleshooting
 
-### Browser doesn't open in headless mode
-- Set `"headless": false` in your request to see what's happening
-- Check console logs for error messages
+### Cloudflare blocking / "Just a moment..." page
+- **Solution:** Set `headlessMode = false` to run with visible browser
+- Cloudflare is more likely to block headless browsers
+- The scraper includes Cloudflare detection and automatic waiting
 
-### Cloudflare not bypassed
-- Wait longer - sometimes it takes 10-20 seconds
-- Try different Upwork URLs
-- Check your internet connection
+### Not getting full descriptions
+- The script clicks into each job to fetch full descriptions
+- This takes time - be patient
+- If fullDescription is empty, the job may have been removed or access was blocked
 
 ### Jobs not found
-- Verify the Upwork URL is valid
-- Make sure you're using a search results page URL
-- Try adding `&sort=recency` to get newest jobs first
+- Check that your keywords match actual Upwork jobs
+- Try more specific or popular keywords
+- The scraper automatically sorts by recency (newest jobs first)
 
-## 🚀 Advanced Features
+### Script crashes or hangs
+- Check your internet connection
+- Try reducing `jobsPerKeyword` to a smaller number (e.g., 10)
+- Close other programs using Chrome/Chromium
 
-### Using with Login Cookies (For More Data)
+### CSV file not opening correctly in Excel
+- The file uses proper CSV escaping for special characters
+- If descriptions have line breaks, Excel should handle them correctly
+- Try opening with "Import Data" feature in Excel for best results
 
-When logged in, you get access to:
-- Client hiring history
-- More detailed client information
-- Enhanced filtering capabilities
+## 🚀 How It Works
 
-This feature requires cookie handling and will be covered in a separate tutorial.
+1. **Launches Chrome** - Opens a real Chrome browser using Puppeteer
+2. **Bypasses Cloudflare** - Uses `puppeteer-real-browser` to avoid bot detection
+3. **Searches keywords** - Goes to Upwork search page for each keyword
+4. **Collects job listings** - Extracts job data from search results
+5. **Clicks into each job** - Opens job detail page to get full description
+6. **Handles pagination** - Automatically goes to next page if more jobs needed
+7. **Exports results** - Saves to CSV (Excel) and JSON files with timestamps
 
-## 💡 Tips
+The entire process is automated - you just configure your keywords and run the script!
 
-1. **Sort by recency** - Add `&sort=recency` to your Upwork URL to get the newest jobs first
-2. **Use specific searches** - More specific searches = better results
-3. **Schedule wisely** - Run every 60-90 minutes to catch new jobs early
-4. **Filter with AI** - Use ChatGPT or Gemini to filter jobs that match your skills
+## 💡 Tips & Best Practices
+
+1. **Start with visible browser** - Set `headlessMode = false` to see what's happening and ensure Cloudflare bypass works
+2. **Use specific keywords** - More specific searches = better quality results
+3. **Scrape 30-50 jobs per keyword** - Good balance between speed and data quantity
+4. **Run during off-peak hours** - Less likely to trigger rate limits
+5. **Wait between runs** - The script includes automatic 5-second delays between keywords
+6. **Open CSV in Excel** - Full descriptions are properly formatted for spreadsheet viewing
+7. **Filter with AI** - Import the JSON file into ChatGPT or Claude to filter jobs matching your skills
+8. **Customize keywords** - Edit the `keywords` array in `scrape-multiple.js` to match your niche
+
+## 🎯 Use Cases
+
+- **Freelancers:** Find the latest jobs matching your skills across multiple keywords
+- **Agencies:** Monitor client acquisition opportunities in bulk
+- **Researchers:** Analyze job market trends and pricing
+- **Automation:** Integrate with n8n/Zapier to auto-apply or get notifications
+- **AI Filtering:** Feed scraped jobs to ChatGPT/Claude to find perfect matches
 
 ## 📝 License
 
