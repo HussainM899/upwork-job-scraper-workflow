@@ -1,8 +1,8 @@
-# 🚀 Upwork Job Scraper
+# FREE Upwork Job Scraper
 
 A free, unlimited Upwork job scraper that bypasses Cloudflare detection using Puppeteer Real Browser. Scrape multiple keywords at once and get results in Excel/CSV and JSON formats.
 
-## ✨ Features
+## Features
 
 - ✅ **Cloudflare Bypass** - Uses Puppeteer Real Browser to bypass bot detection
 - ✅ **Free & Unlimited** - No subscription fees or API limits
@@ -12,19 +12,19 @@ A free, unlimited Upwork job scraper that bypasses Cloudflare detection using Pu
 - ✅ **Pagination Support** - Automatically scrapes across multiple pages
 - ✅ **REST API Available** - Easy to integrate with n8n, Zapier, or any automation tool (optional)
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Node.js (v14 or higher) - [Download here](https://nodejs.org/)
 - npm (comes with Node.js)
 
-## 🛠️ Installation
+## Installation
 
 1. **Install dependencies:**
 ```powershell
 npm install
 ```
 
-## 🎯 Quick Start - Local Scraping (Recommended)
+## Quick Start - Local Scraping (Recommended)
 
 ### Option 1: Multi-Keyword Scraper (Best for bulk scraping)
 
@@ -79,7 +79,7 @@ Run it:
 node test.js
 ```
 
-## 🌐 API Server (Optional - For n8n/Zapier Integration)
+## API Server (Optional - For n8n/Zapier Integration)
 
 If you want to use this as an API with automation tools:
 
@@ -133,7 +133,7 @@ The API will be available at `http://localhost:3000`
 - `maxJobs` - **(optional)** Number of jobs to scrape (default: 100)
 - `headless` - **(optional)** Run browser invisibly (default: true, recommended: false for reliability)
 
-## 🌐 Make It Accessible Online with ngrok
+## Make It Accessible Online with ngrok
 
 To use this API with n8n or other online automation tools, expose it using ngrok:
 
@@ -151,7 +151,7 @@ ngrok http 3000
 
 4. **Copy the public URL** (e.g., `https://abc123.ngrok.io`) and use it in your automation workflows!
 
-## 🤖 Integration with n8n
+## Integration with n8n
 
 ### Method 1: Using n8n Form Trigger + HTTP Request (Recommended)
 
@@ -208,7 +208,7 @@ ngrok http 3000
 3. Add **HTTP Request** node with the scraper API
 4. Jobs are scraped automatically on schedule!
 
-## 📊 Example Workflow
+## Example Workflow
 
 ```
 ┌─────────────────┐
@@ -240,7 +240,7 @@ ngrok http 3000
 └─────────────────┘
 ```
 
-## 🎨 Extracted Data Fields
+## Extracted Data Fields
 
 Each job object contains:
 
@@ -261,7 +261,7 @@ Each job object contains:
 
 **Note:** The scraper automatically clicks on each job to fetch the full description and additional details!
 
-## 📊 Output Files
+## Output Files
 
 ### CSV File (`upwork-results-[timestamp].csv`)
 - Opens directly in Excel or Google Sheets
@@ -288,7 +288,7 @@ Each job object contains:
 ]
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Cloudflare blocking / "Just a moment..." page
 - **Solution:** Set `headlessMode = false` to run with visible browser
@@ -315,7 +315,7 @@ Each job object contains:
 - If descriptions have line breaks, Excel should handle them correctly
 - Try opening with "Import Data" feature in Excel for best results
 
-## 🚀 How It Works
+## How It Works
 
 1. **Launches Chrome** - Opens a real Chrome browser using Puppeteer
 2. **Bypasses Cloudflare** - Uses `puppeteer-real-browser` to avoid bot detection
@@ -327,7 +327,7 @@ Each job object contains:
 
 The entire process is automated - you just configure your keywords and run the script!
 
-## 💡 Tips & Best Practices
+## Tips & Best Practices
 
 1. **Start with visible browser** - Set `headlessMode = false` to see what's happening and ensure Cloudflare bypass works
 2. **Use specific keywords** - More specific searches = better quality results
@@ -338,7 +338,7 @@ The entire process is automated - you just configure your keywords and run the s
 7. **Filter with AI** - Import the JSON file into ChatGPT or Claude to filter jobs matching your skills
 8. **Customize keywords** - Edit the `keywords` array in `scrape-multiple.js` to match your niche
 
-## 🎯 Use Cases
+## Use Cases
 
 - **Freelancers:** Find the latest jobs matching your skills across multiple keywords
 - **Agencies:** Monitor client acquisition opportunities in bulk
@@ -350,15 +350,15 @@ The entire process is automated - you just configure your keywords and run the s
 
 ISC
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Feel free to submit issues or pull requests.
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This tool is for educational purposes. Make sure to comply with Upwork's Terms of Service when using automated tools. Use responsibly and ethically.
 
-## 🔗 Resources
+## Resources
 
 - [Puppeteer Real Browser](https://www.npmjs.com/package/puppeteer-real-browser)
 - [n8n Automation](https://n8n.io/)
