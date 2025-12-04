@@ -21,3 +21,5 @@ Thumbs.db
 # Ignore build files
 dist/
 build/
+
+upwork-results**
