@@ -446,11 +446,13 @@ async function scrapeJobs(upworkUrl, headless = true, maxJobs = 100) {
         let currentPage = 1;
         let consecutiveFailures = 0;
         const maxConsecutiveFailures = 2;
+        let consecutivePagesWithNoDuplicates = 0;
+        const maxConsecutiveNoDuplicates = 3; // Stop if 3 pages in a row have only duplicates
         
         console.log(`Target: ${maxJobs} jobs\n`);
         
         // Loop through pages until we hit maxJobs or no more available
-        while (allJobs.length < maxJobs && consecutiveFailures < maxConsecutiveFailures) {
+        while (allJobs.length < maxJobs && consecutiveFailures < maxConsecutiveFailures && consecutivePagesWithNoDuplicates < maxConsecutiveNoDuplicates) {
             
             // Find all current job elements
             const jobElements = await findJobElements(page);
@@ -473,9 +475,10 @@ async function scrapeJobs(upworkUrl, headless = true, maxJobs = 100) {
             // Reset failure counter since we found jobs
             consecutiveFailures = 0;
             
-            console.log(`\n📄 Page ${currentPage} - Found ${jobElements.length} jobs (${allJobs.length} total scraped)\n`);
-            
             let newJobsOnThisPage = 0;
+            let duplicatesOnThisPage = 0;
+            
+            console.log(`\n📄 Page ${currentPage} - Found ${jobElements.length} job elements (${allJobs.length} total scraped)\n`);
             
             // Extract basic info from all visible jobs
             for (let i = 0; i < jobElements.length && allJobs.length < maxJobs; i++) {
@@ -520,22 +523,37 @@ async function scrapeJobs(upworkUrl, headless = true, maxJobs = 100) {
                             // Add without full details if no valid link
                             allJobs.push(basicInfo);
                         }
+                    } else {
+                        duplicatesOnThisPage++;
                     }
                 } catch (error) {
                     console.error(`  Error processing job ${i + 1}: ${error.message}`);
                 }
             }
-            
-            // If we've hit our target, stop
+                        // Show summary for this page
+            if (duplicatesOnThisPage > 0) {
+                console.log(`\n📄 Page ${currentPage} summary: ${newJobsOnThisPage} new jobs, ${duplicatesOnThisPage} duplicates`);
+            }
+                        // If we've hit our target, stop
             if (allJobs.length >= maxJobs) {
                 console.log(`\n✅ Reached target of ${maxJobs} jobs`);
                 break;
             }
             
-            // If we didn't find any new jobs on this page, increment failure counter
+            // If we didn't find any new jobs on this page, increment counters
             if (newJobsOnThisPage === 0) {
                 consecutiveFailures++;
-                console.log(`\n⚠ No new jobs on page ${currentPage}`);
+                consecutivePagesWithNoDuplicates++;
+                console.log(`\n⚠ No new jobs on page ${currentPage} (${consecutivePagesWithNoDuplicates} consecutive pages with duplicates)`);
+                
+                // If we've seen too many pages with only duplicates, stop
+                if (consecutivePagesWithNoDuplicates >= maxConsecutiveNoDuplicates) {
+                    console.log(`\n❌ Stopped: Found only duplicate jobs on ${maxConsecutiveNoDuplicates} consecutive pages`);
+                    break;
+                }
+            } else {
+                // Reset the counter when we find new jobs
+                consecutivePagesWithNoDuplicates = 0;
             }
             
             // Try to navigate to next page
