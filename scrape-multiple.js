@@ -4,7 +4,22 @@ const fs = require('fs');
 
 // ===== CONFIGURE YOUR KEYWORDS HERE =====
 const keywords = [
-    'AI Automations'
+    'Manual CV formatting',
+    'Resume blinding',
+    'Anonymize resumes',
+    'VMS data entry',
+    'ATS data cleansing',
+    'Sourcing and uploading profiles',
+    'Excel to ATS migration',
+    'Candidate ownership dispute',
+    'Recruiting workflow automation',
+    'ATS API integration',
+    'Submission turnaround',
+    'Recruiting Coordinator',
+    'Resourcer',
+    'Data entry specialist recruitment',
+    'CV screening specialist'
+
 ];
 
 const jobsPerKeyword = 30; // Number of jobs to scrape per keyword
@@ -21,45 +36,73 @@ async function scrapeMultipleKeywords() {
     
     const allResults = [];
     let totalJobsScraped = 0;
+    const maxAttempts = 3; // Maximum attempts per keyword if no jobs found
     
     for (let i = 0; i < keywords.length; i++) {
         const keyword = keywords[i];
         console.log(`\n\n[${ i + 1}/${keywords.length}] 🔍 Searching for: "${keyword}"`);
         console.log('━'.repeat(60));
         
-        try {
-            const jobs = await scrapeJobs(keyword, headlessMode, jobsPerKeyword);
+        let attempts = 0;
+        let jobs = [];
+        let lastError = null;
+        let shouldRetry = true;
+        
+        while (attempts < maxAttempts && shouldRetry) {
+            attempts++;
             
-            console.log(`\n✅ Successfully scraped ${jobs.length} jobs for "${keyword}"`);
-            
-            // Add keyword to each job for reference
-            const jobsWithKeyword = jobs.map(job => ({
-                searchKeyword: keyword,
-                ...job
-            }));
-            
-            allResults.push({
-                keyword: keyword,
-                jobCount: jobs.length,
-                jobs: jobsWithKeyword
-            });
-            
-            totalJobsScraped += jobs.length;
-            
-            // Small delay between keywords to be respectful
-            if (i < keywords.length - 1) {
-                console.log('\n⏳ Waiting 5 seconds before next keyword...');
-                await new Promise(resolve => setTimeout(resolve, 5000));
+            if (attempts > 1) {
+                console.log(`\n🔄 Attempt ${attempts}/${maxAttempts} for "${keyword}"`);
             }
             
-        } catch (error) {
-            console.error(`\n❌ Error scraping "${keyword}": ${error.message}`);
-            allResults.push({
-                keyword: keyword,
-                jobCount: 0,
-                error: error.message,
-                jobs: []
-            });
+            try {
+                jobs = await scrapeJobs(keyword, headlessMode, jobsPerKeyword);
+                
+                if (jobs.length > 0) {
+                    console.log(`\n✅ Successfully scraped ${jobs.length} jobs for "${keyword}"`);
+                    shouldRetry = false; // Got jobs, no need to retry
+                } else {
+                    console.log(`\n⚠️  No jobs found for "${keyword}" (Attempt ${attempts}/${maxAttempts})`);
+                    
+                    if (attempts < maxAttempts) {
+                        console.log('⏳ Waiting 10 seconds before retry...');
+                        await new Promise(resolve => setTimeout(resolve, 10000));
+                    } else {
+                        console.log(`\n❌ No jobs found after ${maxAttempts} attempts. Moving to next keyword.`);
+                    }
+                }
+                
+            } catch (error) {
+                console.error(`\n❌ Error on attempt ${attempts} for "${keyword}": ${error.message}`);
+                lastError = error;
+                
+                if (attempts < maxAttempts) {
+                    console.log('⏳ Waiting 10 seconds before retry...');
+                    await new Promise(resolve => setTimeout(resolve, 10000));
+                }
+            }
+        }
+        
+        // Add keyword to each job for reference
+        const jobsWithKeyword = jobs.map(job => ({
+            searchKeyword: keyword,
+            ...job
+        }));
+        
+        allResults.push({
+            keyword: keyword,
+            jobCount: jobs.length,
+            attempts: attempts,
+            jobs: jobsWithKeyword,
+            ...(lastError && jobs.length === 0 ? { error: lastError.message } : {})
+        });
+        
+        totalJobsScraped += jobs.length;
+        
+        // Small delay between keywords to be respectful
+        if (i < keywords.length - 1) {
+            console.log('\n⏳ Waiting 5 seconds before next keyword...');
+            await new Promise(resolve => setTimeout(resolve, 5000));
         }
     }
     
@@ -70,7 +113,8 @@ async function scrapeMultipleKeywords() {
     // Display summary
     allResults.forEach((result, index) => {
         const status = result.error ? '❌ FAILED' : '✅ SUCCESS';
-        console.log(`${index + 1}. ${status} "${result.keyword}" - ${result.jobCount} jobs`);
+        const attemptsInfo = result.attempts > 1 ? ` (${result.attempts} attempts)` : '';
+        console.log(`${index + 1}. ${status} "${result.keyword}" - ${result.jobCount} jobs${attemptsInfo}`);
     });
     
     console.log('\n' + '='.repeat(60));
