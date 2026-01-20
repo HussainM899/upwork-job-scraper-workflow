@@ -23,5 +23,5 @@ dist/
 build/
 
 upwork-results**
-.png**
-.html**
+*.png
+*.html
