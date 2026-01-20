@@ -4,7 +4,12 @@ const fs = require('fs');
 
 // ===== CONFIGURE YOUR KEYWORDS HERE =====
 const keywords = [
-    'AI Automations'
+    'AI Automations',
+    'AI Agents',
+    'n8n',
+    'AI workflows',
+    'voice AI',
+    'chatbot'
 ];
 
 const jobsPerKeyword = 30; // Number of jobs to scrape per keyword

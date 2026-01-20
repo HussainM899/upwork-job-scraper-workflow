@@ -1,8 +1,21 @@
 # Ignore node modules
 node_modules/
 
+# LinkedIn session data (contains login credentials)
+linkedin-session/
+
+# Test results and scraped data
+*-test-results.json
+linkedin-profiles-*.json
+linkedin-profiles-*.csv
+upwork-results-*.json
+upwork-results-*.csv
+debug-*.html
+debug-*.png
+
 # Ignore environment variables
 .env
+.env.local
 
 # Ignore logs
 *.log
